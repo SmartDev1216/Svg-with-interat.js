@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.11"></script>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #fff;
+        }
+
+        header {
+            background: radial-gradient(circle at center, #007739, #005627);
+            text-align: center;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 2;
+            position: fixed;
+            width: 100%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 8px rgba(36, 175, 128, 0.8);
+        }
+
+        header.hidden {
+            transform: translateY(-100%);
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #004922, transparent);
+            z-index: -1;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            text-transform: lowercase;
+            letter-spacing: 2px;
+        }
+
+        .logo img {
+            width: 180px;
+            height: auto;
+        }
+
+        .grid-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            margin-top: 100px;
+        }
+
+        canvas {
+            position: absolute;
+            cursor: grab;
+            z-index: 1;
+        }
+
+        .toolbar {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 8px 12px rgba(36, 175, 128, 0.3);
+            border: 1px solid #24AF80;
+            z-index: 2;
+        }
+
+        .toolbar .icon {
+            font-size: 24px;
+            color: #24AF80;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .toolbar .icon-tooltip {
+            font-size: 14px;
+            color: #24AF80;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .toolbar .icon:hover {
+            transform: scale(1.5);
+            color: #24AF80;
+        }
+
+        .dark-mode {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .toggle-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #fff;
+            transition: color 0.5s ease;
+            z-index: 2;
+        }
+
+        .dark-mode .toggle-button {
+            color: #fff;
+        }
+
+        .icon-tooltip {
+            position: absolute;
+            top: 0px;
+            left: 50%;
+            font-size: 14px;
+            transform: translateX(40%);
+            color: #24AF80;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .icon:hover .icon-tooltip {
+            opacity: 1;
+        }
+
+        /* (Your existing styles remain unchanged) */
+        /* ... */
+    </style>
+    <title>Stratber - Supply Chain Resource</title>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <img src="stratber_logo.svg" alt="stratber_logo">
+        </div>
+    </header>
+    <div class="grid-container" id="gridContainer">
+        <div class="icon" onclick="iconClick(this)">
+            <!-- <i class="fas fa-bolt" style="color: #83C8B1;"></i> -->
+            <img src="./bolt.svg" alt="Bolt Icon" style="width: 24px; height: 24px;">
+            <div class="icon-tooltip" style="color:#24AF80;">Customer</div>
+        </div>
+        <canvas id="gridCanvas"></canvas>
+        <div class="toggle-button" onclick="toggleMode()">
+            <i class="fas fa-moon" id="modeIcon" style="color: black;"></i>
+        </div>
+        <div class="toolbar">
+            <div class="icon" onclick="iconClick(this)">
+                <img src="supplier.svg" alt="Supplier Icon" style="width: 24px; height: 24px;">
+                <div class="icon-tooltip" style="color:#568676;">Supplier</div>
+            </div>
+            <div class="icon" onclick="iconClick(this)">
+                <img src="customer.svg" alt="Customer Icon" style="width: 24px; height: 24px;">
+                <div class="icon-tooltip" style="color:#83C8B1;">Customer</div>
+            </div>
+            <div class="icon" onclick="iconClick(this)">
+                <img src="process.svg" alt="Process Icon" style="width: 24px; height: 24px;">
+                <div class="icon-tooltip" style="color:#24AF80;">Process</div>
+            </div>
+            <div class="icon" onclick="iconClick(this)">
+                <img src="inventory.svg" alt="Inventory Icon" style="width: 24px; height: 24px;">
+                <div class="icon-tooltip" style="color:#24AF80;">Inventory</div>
+            </div>
+            <div class="icon" onclick="iconClick(this)">
+                <img src="shipment.svg" alt="Shipment Icon" style="width: 24px; height: 24px;">
+                <div class="icon-tooltip" style="color:#24AF80;">Shipment</div>
+            </div>
+            <div class="icon" onclick="iconClick(this)">
+                <img src="shipment.svg" alt="Shipment Icon" style="width: 24px; height: 24px;">
+                <div class="icon-tooltip" style="color:#24AF80;">Shipment</div>
+            </div>
+            <div class="icon" onclick="iconClick(this)">
+                <img src="information.svg" alt="Information Icon" style="width: 24px; height: 24px;">
+                <div class="icon-tooltip" style="color:#24AF80;">Information</div>
+            </div>
+            <div class="icon" onclick="iconClick(this)">
+                <!-- <i class="fas fa-bolt" style="color: #83C8B1;"></i> -->
+                <img src="./bolt.svg" alt="Bolt Icon" style="width: 24px; height: 24px;">
+                <div class="icon-tooltip" style="color:#24AF80;">Customer</div>
+            </div>
+            <div class="icon" onclick="iconClick(this)">
+                <!-- <i class="fas fa-coffee" style="color: #568676;"></i> -->
+                <img src="./coffee-cup-icon.svg" alt="Supplier Icon" style="width: 24px; height: 24px;">
+                <div class="icon-tooltip" style="color:#24AF80;">Supplier</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let isDarkMode = false;
+        let startX, startY, startLeft, startTop;
+        let selectedIcon = null;
+        let isDragging = false;
+
+        function toggleMode() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            const icon = document.getElementById('modeIcon');
+
+            if (isDarkMode) {
+                document.body.style.backgroundColor = '#333';
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                icon.style.color = 'orange';
+            } else {
+                document.body.style.backgroundColor = '#fff';
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                icon.style.color = 'black';
+            }
+        }
+
+        function iconClick(element) {
+            if (selectedIcon) {
+                gridContainer.removeChild(selectedIcon);
+            }
+
+            selectedIcon = element.cloneNode(true);
+            selectedIcon.classList.add('enlarged-icon');
+            selectedIcon.style.position = 'absolute';
+            selectedIcon.style.zIndex = '3';
+            selectedIcon.style.cursor = 'grab';
+
+            const enlargedSize = 150;
+            const enlargedSize2 = 250;
+
+            selectedIcon.querySelector('img').style.width = enlargedSize + 'px';
+            selectedIcon.querySelector('img').style.height = enlargedSize + 'px';
+            selectedIcon.style.width = enlargedSize2 + 'px';
+            selectedIcon.style.height = enlargedSize2 + 'px';
+
+            const centerX = gridContainer.clientWidth / 2 - enlargedSize / 2;
+            const centerY = gridContainer.clientHeight / 2 - enlargedSize / 2;
+
+            selectedIcon.style.left = centerX + 'px';
+            selectedIcon.style.top = centerY + 'px';
+
+            gridContainer.appendChild(selectedIcon);
+
+            interact(selectedIcon)
+                .draggable({
+                    listeners: {
+                        move: function (event) {
+                            let target = event.target;
+                            // keep the dragged position in the data-x/data-y attributes
+                            x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                            y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                            // translate the element
+                            target.style.webkitTransform =
+                                target.style.transform =
+                                'translate(' + x + 'px, ' + y + 'px)';
+
+                            // update the posiion attributes
+                            target.setAttribute('data-x', x);
+                            target.setAttribute('data-y', y);
+                        }
+                    },
+                    modifiers: [
+                        interact.modifiers.restrictRect({
+                            restriction: 'parent',
+                            endOnly: true,
+                        }),
+                    ],
+                })
+                .resizable({
+                    edges: {
+                        left: true,
+                        right: true,
+                        top: true,
+                        bottom: true
+                    },
+                    listeners: {
+                        move: resizeMoveListener
+                    },
+                    modifiers: [
+                        interact.modifiers.restrictEdges({
+                            outer: 'parent',
+                        }),
+                        interact.modifiers.aspectRatio({
+                            ratio: 'preserve'
+                        }),
+                    ],
+                })
+            startX = 0;
+            startY = 0;
+            startLeft = selectedIcon.offsetLeft;
+            startTop = selectedIcon.offsetTop;
+        }
+
+        function resizeMoveListener(event) {
+            const target = event.target;
+            const {
+                rect
+            } = event;
+            const {
+                width,
+                height
+            } = rect;
+
+            target.style.width = width + 'px';
+            target.style.height = height + 'px';
+            target.style.left = (parseFloat(target.style.left) + event.deltaRect.left) + 'px';
+            target.style.top = (parseFloat(target.style.top) + event.deltaRect.top) + 'px';
+        }
+
+        const gridContainer = document.getElementById('gridContainer');
+        const gridCanvas = document.getElementById('gridCanvas');
+        const ctx = gridCanvas.getContext('2d');
+
+        function resizeCanvas() {
+            gridCanvas.width = gridContainer.clientWidth;
+            gridCanvas.height = gridContainer.clientHeight;
+            drawGrid();
+
+            if (selectedIcon) {
+                selectedIcon.style.left = (startLeft / gridCanvas.width) * gridContainer.clientWidth + 'px';
+                selectedIcon.style.top = (startTop / gridCanvas.height) * gridContainer.clientHeight + 'px';
+            }
+        }
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+
+            ctx.beginPath();
+            for (let x = 20; x < gridCanvas.width; x += 20) {
+                for (let y = 20; y < gridCanvas.height; y += 20) {
+                    ctx.moveTo(x, y);
+                    ctx.arc(x, y, 1, 0, 2 * Math.PI);
+                }
+            }
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fill();
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        let prevScrollPos = window.pageYOffset;
+
+        window.onscroll = function () {
+            const currentScrollPos = window.pageYOffset;
+
+            if (prevScrollPos > currentScrollPos) {
+                header.classList.remove('hidden');
+            } else {
+                header.classList.add('hidden');
+            }
+
+            prevScrollPos = currentScrollPos;
+        };
+    </script>
+</body>
+
+</html>
