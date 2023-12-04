@@ -158,7 +158,11 @@
         </div>
     </header>
     <div class="grid-container" id="gridContainer">
-    
+        <div class="icon" onclick="iconClick(this)">
+            <!-- <i class="fas fa-bolt" style="color: #83C8B1;"></i> -->
+            <img src="./bolt.svg" alt="Bolt Icon" style="width: 24px; height: 24px;">
+            <div class="icon-tooltip" style="color:#24AF80;">Customer</div>
+        </div>
         <canvas id="gridCanvas"></canvas>
         <div class="toggle-button" onclick="toggleMode()">
             <i class="fas fa-moon" id="modeIcon" style="color: black;"></i>
@@ -210,6 +214,7 @@
         let selectedIcon = null;
         let isDragging = false;
         let deleteButton = null;
+        let selectedIconList = []
 
         function toggleMode() {
             isDarkMode = !isDarkMode;
@@ -230,116 +235,147 @@
         }
 
         function iconClick(element) {
-            if (selectedIcon) {
-                gridContainer.removeChild(selectedIcon);
-            }
+            console.log("element", element.querySelector('img').getAttribute('src'))
+            let selectedIcon = null;
 
-            selectedIcon = element.cloneNode(true);
-            selectedIcon.classList.add('enlarged-icon');
-            selectedIcon.style.position = 'absolute';
-            selectedIcon.style.zIndex = '3';
-            selectedIcon.style.cursor = 'grab';
+            if (!selectedIconList.includes(element.querySelector('img').getAttribute('src'))) {
+                selectedIconList.push(element.querySelector('img').getAttribute('src'))
+                selectedIcon = element.cloneNode(true);
+                selectedIcon.classList.add('enlarged-icon');
+                selectedIcon.style.position = 'absolute';
+                selectedIcon.style.zIndex = '3';
+                selectedIcon.style.cursor = 'grab';
 
-            const enlargedSize = 150;
-            const enlargedSize2 = 250;
+                const enlargedSize = 150;
+                const enlargedSize2 = 250;
 
-            selectedIcon.querySelector('img').style.width = enlargedSize + 'px';
-            selectedIcon.querySelector('img').style.height = enlargedSize + 'px';
-            selectedIcon.style.width = enlargedSize2 + 'px';
-            selectedIcon.style.height = enlargedSize2 + 'px';
+                selectedIcon.querySelector('img').style.width = enlargedSize + 'px';
+                selectedIcon.querySelector('img').style.height = enlargedSize + 'px';
+                selectedIcon.style.width = enlargedSize2 + 'px';
+                selectedIcon.style.height = enlargedSize2 + 'px';
 
-            const centerX = gridContainer.clientWidth / 2 - enlargedSize / 2;
-            const centerY = gridContainer.clientHeight / 2 - enlargedSize / 2;
+                const centerX = gridContainer.clientWidth / 2 - enlargedSize / 2;
+                const centerY = gridContainer.clientHeight / 2 - enlargedSize / 2;
 
-            selectedIcon.style.left = centerX + 'px';
-            selectedIcon.style.top = centerY + 'px';
+                selectedIcon.style.left = centerX + 'px';
+                selectedIcon.style.top = centerY + 'px';
 
-            // Add delete button
-            let existingDeleteButton = selectedIcon.querySelector('.delete-button');
+                // Add delete button
+                let existingDeleteButton = selectedIcon.querySelector('.delete-button');
 
-            if (!existingDeleteButton) {
-                // If delete button doesn't exist, create a new one
-                deleteButton = document.createElement('button');
-                deleteButton.innerText = 'Delete';
-                deleteButton.classList.add('delete-button');
+                if (!existingDeleteButton) {
+                    // If delete button doesn't exist, create a new one
+                    deleteButton = document.createElement('button');
+                    deleteButton.innerText = 'Delete';
+                    deleteButton.classList.add('delete-button');
 
-                deleteButton.addEventListener('click', deleteButtonClickHandler);
+                    deleteButton.addEventListener('click', deleteButtonClickHandler);
 
-                // Append the delete button
-                selectedIcon.appendChild(deleteButton);
-            } else {
-                // If delete button exists, update its position
-                deleteButton = existingDeleteButton;
-                deleteButton.removeEventListener('click', deleteButtonClickHandler);
-                deleteButton.addEventListener('click', deleteButtonClickHandler);
-            }
+                    // Append the delete button
+                    selectedIcon.appendChild(deleteButton);
+                } else {
+                    // If delete button exists, update its position
+                    deleteButton = existingDeleteButton;
+                    deleteButton.removeEventListener('click', deleteButtonClickHandler);
+                    deleteButton.addEventListener('click', deleteButtonClickHandler);
+                }
+                // Append the selectedIcon to the gridContainer
+                gridContainer.appendChild(selectedIcon);
 
-            // Append the selectedIcon to the gridContainer
-            gridContainer.appendChild(selectedIcon);
-            interact(selectedIcon)
-                .draggable({
-                    listeners: {
-                        move: function (event) {
-                            let target = event.target;
-                            // keep the dragged position in the data-x/data-y attributes
-                            x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                            y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-                            // translate the element
-                            target.style.webkitTransform =
-                                target.style.transform =
-                                'translate(' + x + 'px, ' + y + 'px)';
-
-                            // update the posiion attributes
-                            target.setAttribute('data-x', x);
-                            target.setAttribute('data-y', y);
-                        }
-                    },
-                    modifiers: [
-                        interact.modifiers.restrictRect({
-                            restriction: 'parent',
-                            endOnly: true,
-                        }),
-                    ],
-                })
-                .resizable({
-                    edges: {
-                        left: true,
-                        right: true,
-                        top: true,
-                        bottom: true
-                    },
-                    onmove: resizeMoveListener,
-                    modifiers: [
-                        interact.modifiers.restrictEdges({
-                            outer: 'parent',
-                        }),
-                        interact.modifiers.aspectRatio({
-                            ratio: 'preserve'
-                        }),
-                    ],
-                })
-                .gesturable({
-                    onmove: function (event) {
-                        initialSize *= (1 + event.ds);
-                        if (initialSize < 24) initialSize = 24;
-
-                        selectedIcon.querySelector('img').style.width = initialSize + 'px';
-                        selectedIcon.querySelector('img').style.height = initialSize + 'px';
-                    },
+                // Attach wheel event listener to the selected icon
+                selectedIcon.addEventListener('wheel', function (event) {
+                    handleWheel(selectedIcon, event);
+                }, {
+                    passive: false
                 });
-            startX = 0;
-            startY = 0;
-            startLeft = selectedIcon.offsetLeft;
-            startTop = selectedIcon.offsetTop;
 
+                interact(selectedIcon)
+                    .draggable({
+                        listeners: {
+                            move: function (event) {
+                                let target = event.target;
+                                // keep the dragged position in the data-x/data-y attributes
+                                x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                                y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
 
+                                // translate the element
+                                target.style.webkitTransform =
+                                    target.style.transform =
+                                    'translate(' + x + 'px, ' + y + 'px)';
+
+                                // update the posiion attributes
+                                target.setAttribute('data-x', x);
+                                target.setAttribute('data-y', y);
+                            }
+                        },
+                        modifiers: [
+                            interact.modifiers.restrictRect({
+                                restriction: 'parent',
+                                endOnly: true,
+                            }),
+                        ],
+                    })
+                    .resizable({
+                        edges: {
+                            left: true,
+                            right: true,
+                            top: true,
+                            bottom: true
+                        },
+                        onmove: function (event) {
+                            resizeMoveListener(selectedIcon, event);
+                        },
+                        modifiers: [
+                            interact.modifiers.restrictEdges({
+                                outer: 'parent',
+                            }),
+                            interact.modifiers.aspectRatio({
+                                ratio: 'preserve'
+                            }),
+                        ],
+                    })
+                    .gesturable({
+                        onmove: function (event) {
+                            initialSize *= (1 + event.ds);
+                            if (initialSize < 24) initialSize = 24;
+
+                            selectedIcon.querySelector('img').style.width = initialSize + 'px';
+                            selectedIcon.querySelector('img').style.height = initialSize + 'px';
+                        },
+                    });
+
+                startX = 0;
+                startY = 0;
+                startLeft = selectedIcon.offsetLeft;
+                startTop = selectedIcon.offsetTop;
+            }
         }
 
-        function deleteButtonClickHandler(event) {
-            if (selectedIcon) {
-                gridContainer.removeChild(selectedIcon);
-                selectedIcon = null;
+        function handleWheel(selectedIcon, event) {
+            event.preventDefault();
+
+            const deltaY = event.deltaY;
+            const imgElement = selectedIcon.querySelector('img');
+            const currentSize = parseFloat(imgElement.style.width);
+
+            // Calculate the new size based on the zoom factor and scroll direction
+            const newSize = currentSize * (1 + zoomFactor * (deltaY > 0 ? -1 : 1));
+
+            // Adjust the limits for zooming
+            if (newSize >= 24 && newSize <= 200) {
+                imgElement.style.width = newSize + 'px';
+                imgElement.style.height = newSize + 'px';
+            }
+        }
+
+        function deleteButtonClickHandler(event, iconToDelete) {
+            if (iconToDelete) {
+                gridContainer.removeChild(iconToDelete);
+                // Remove the icon's src from the selectedIconList
+                const iconSrc = iconToDelete.querySelector('img').getAttribute('src');
+                selectedIconList = selectedIconList.filter(function (element) {
+                    return element !== iconSrc;
+                });
             }
             event.stopPropagation();
         }
@@ -359,25 +395,6 @@
 
         let initialSize = 24;
         let zoomFactor = 0.1;
-
-        function handleWheel(event) {
-            event.preventDefault();
-
-            if (selectedIcon) {
-                const deltaY = event.deltaY;
-                const imgElement = selectedIcon.querySelector('img');
-                const currentSize = parseFloat(imgElement.style.width);
-
-                // Calculate the new size based on the zoom factor and scroll direction
-                const newSize = currentSize * (1 + zoomFactor * (deltaY > 0 ? -1 : 1));
-
-                // Adjust the limits for zooming
-                if (newSize >= 24 && newSize <= 200) {
-                    imgElement.style.width = newSize + 'px';
-                    imgElement.style.height = newSize + 'px';
-                }
-            }
-        }
 
 
         const gridContainer = document.getElementById('gridContainer');
