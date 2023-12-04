@@ -158,11 +158,6 @@
         </div>
     </header>
     <div class="grid-container" id="gridContainer">
-        <div class="icon" onclick="iconClick(this)">
-            <!-- <i class="fas fa-bolt" style="color: #83C8B1;"></i> -->
-            <img src="./bolt.svg" alt="Bolt Icon" style="width: 24px; height: 24px;">
-            <div class="icon-tooltip" style="color:#24AF80;">Customer</div>
-        </div>
         <canvas id="gridCanvas"></canvas>
         <div class="toggle-button" onclick="toggleMode()">
             <i class="fas fa-moon" id="modeIcon" style="color: black;"></i>
@@ -234,6 +229,26 @@
             }
         }
 
+        function deleteButtonClickHandler(event) {
+            const deleteButton = event.target;
+            const parentIcon = deleteButton.closest('.enlarged-icon');
+
+            if (parentIcon) {
+                // Remove the parent icon from the gridContainer
+                gridContainer.removeChild(parentIcon);
+
+                // Find the index of the parent icon's src in the selectedIconList
+                const iconSrc = parentIcon.querySelector('img').getAttribute('src');
+                const iconIndex = selectedIconList.indexOf(iconSrc);
+
+                // Remove the icon's src from the selectedIconList
+                if (iconIndex !== -1) {
+                    selectedIconList.splice(iconIndex, 1);
+                }
+            }
+
+            event.stopPropagation();
+        }
         function iconClick(element) {
             console.log("element", element.querySelector('img').getAttribute('src'))
             let selectedIcon = null;
@@ -269,16 +284,18 @@
                     deleteButton.innerText = 'Delete';
                     deleteButton.classList.add('delete-button');
 
-                    deleteButton.addEventListener('click', deleteButtonClickHandler);
+                    // Use the deleteButtonClickHandler function to handle the click event
+                    deleteButton.addEventListener('click', deleteButtonClickHandler(selectedIcon));
 
                     // Append the delete button
                     selectedIcon.appendChild(deleteButton);
                 } else {
                     // If delete button exists, update its position
                     deleteButton = existingDeleteButton;
-                    deleteButton.removeEventListener('click', deleteButtonClickHandler);
-                    deleteButton.addEventListener('click', deleteButtonClickHandler);
+                    deleteButton.removeEventListener('click', deleteButtonClickHandler(selectedIcon));
+                    deleteButton.addEventListener('click', deleteButtonClickHandler(selectedIcon));
                 }
+
                 // Append the selectedIcon to the gridContainer
                 gridContainer.appendChild(selectedIcon);
 
@@ -368,16 +385,19 @@
             }
         }
 
-        function deleteButtonClickHandler(event, iconToDelete) {
-            if (iconToDelete) {
+        function deleteButtonClickHandler(iconToDelete) {
+            return function (event) {
+                // Remove the iconToDelete from the gridContainer
                 gridContainer.removeChild(iconToDelete);
+
                 // Remove the icon's src from the selectedIconList
                 const iconSrc = iconToDelete.querySelector('img').getAttribute('src');
                 selectedIconList = selectedIconList.filter(function (element) {
                     return element !== iconSrc;
                 });
-            }
-            event.stopPropagation();
+
+                event.stopPropagation();
+            };
         }
 
         function resizeMoveListener(event) {
