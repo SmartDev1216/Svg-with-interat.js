@@ -145,6 +145,78 @@
             opacity: 1;
         }
 
+        .removeAllIcons {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 5px;
+            cursor: pointer;
+            background: blue;
+            border: blue;
+            font-size: 10px;
+            color: #fff;
+            transition: color 0.5s ease;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 220.52px;
+            min-height: 30px;
+            font-family: calibri;
+            border: none;
+            border-radius: 100px;
+            cursor: pointer;
+            font-weight: 400;
+            text-decoration: none;
+            transition: all 0.5s linear;
+        }
+
+
+
+        .removespan {
+            font-size: 30px;
+            font-weight: 700;
+            padding: 0 10px;
+        }
+
+        ion-icon {
+            font-size: 2em;
+            transition: all 0.5s linear;
+        }
+
+        .removeAllIcons:hover ion-icon {
+            transform: rotate(-90deg);
+
+        }
+
+
+        .yellow {
+            /* background: #0ebac5; */
+            background: none;
+            color: black;
+        }
+
+        .yellow::before {
+            content: "";
+            display: block;
+            width: 56px;
+            height: 100%;
+            background-color: #0ebac5;
+            position: absolute;
+            border-radius: 100px;
+            left: 1em;
+            z-index: -1;
+            transition: all 600ms ease;
+        }
+
+        .yellow:hover::before {
+            width: 100%;
+        }
+
+        .yellow:hover ion-icon {
+            transform: translateX(10px);
+        }
+
         /* (Your existing styles remain unchanged) */
         /* ... */
     </style>
@@ -162,6 +234,10 @@
         <div class="toggle-button" onclick="toggleMode()">
             <i class="fas fa-moon" id="modeIcon" style="color: black;"></i>
         </div>
+        <a href="#" class="removeAllIcons yellow" onclick="removeImgs()">
+            <span class="removespan">Remove Imgs</span>
+            <ion-icon name="arrow-forward"></ion-icon>
+        </a>
         <div class="toolbar">
             <div class="icon" onclick="iconClick(this)">
                 <img src="supplier.svg" alt="Supplier Icon" style="width: 24px; height: 24px;">
@@ -210,6 +286,32 @@
         let isDragging = false;
         let deleteButton = null;
         let selectedIconList = []
+
+
+        function removeImgs() {
+            // Iterate over the selectedIconList and remove each icon
+            selectedIconList.forEach(function (iconSrc) {
+                const iconToDelete = document.querySelector(`.enlarged-icon img[src="${iconSrc}"]`).closest('.enlarged-icon');
+                if (iconToDelete) {
+                    gridContainer.removeChild(iconToDelete);
+                }
+            });
+
+            // Clear the selectedIconList
+            selectedIconList = [];
+
+            // Reset other variables as needed
+            selectedIcon = null;
+            isDragging = false;
+            deleteButton = null;
+            startLeft = null;
+            startTop = null;
+            startX = null;
+            startY = null;
+
+            // Redraw the grid
+            drawGrid();
+        }
 
         function toggleMode() {
             isDarkMode = !isDarkMode;
