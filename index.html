@@ -292,9 +292,7 @@
                         top: true,
                         bottom: true
                     },
-                    listeners: {
-                        move: resizeMoveListener
-                    },
+                    onmove: resizeMoveListener,
                     modifiers: [
                         interact.modifiers.restrictEdges({
                             outer: 'parent',
@@ -304,26 +302,42 @@
                         }),
                     ],
                 })
+                .gesturable({
+                    onmove: function (event) {
+                        initialSize *= (1 + event.ds);
+                        if (initialSize < 24) initialSize = 24;
+
+                        selectedIcon.querySelector('img').style.width = initialSize + 'px';
+                        selectedIcon.querySelector('img').style.height = initialSize + 'px';
+                    },
+                });
             startX = 0;
             startY = 0;
             startLeft = selectedIcon.offsetLeft;
             startTop = selectedIcon.offsetTop;
         }
 
-        function resizeMoveListener(event) {
-            const target = event.target;
-            const {
-                rect
-            } = event;
-            const {
-                width,
-                height
-            } = rect;
 
-            target.style.width = width + 'px';
-            target.style.height = height + 'px';
-            target.style.left = (parseFloat(target.style.left) + event.deltaRect.left) + 'px';
-            target.style.top = (parseFloat(target.style.top) + event.deltaRect.top) + 'px';
+        function resizeMoveListener(event) {
+            const { dx, dy } = event;
+            const newX = parseFloat(selectedIcon.style.left || 0) + dx;
+            const newY = parseFloat(selectedIcon.style.top || 0) + dy;
+
+            selectedIcon.style.left = newX + 'px';
+            selectedIcon.style.top = newY + 'px';
+        }
+        let initialSize = 24;
+        let zoomFact = 0.1;
+        function handleWheel(event) {
+            event.preventDefault();
+            console.log(event)
+            if (selectedIcon) {
+                initialSize *= 1 + event.deltaY * 0.01;
+                if (initialSize < 24) initialSize = 24;
+
+                selectedIcon.querySelector('img').style.width = initialSize + 'px';
+                selectedIcon.querySelector('img').style.height = initialSize + 'px';
+            }
         }
 
         const gridContainer = document.getElementById('gridContainer');
@@ -336,8 +350,11 @@
             drawGrid();
 
             if (selectedIcon) {
-                selectedIcon.style.left = (startLeft / gridCanvas.width) * gridContainer.clientWidth + 'px';
-                selectedIcon.style.top = (startTop / gridCanvas.height) * gridContainer.clientHeight + 'px';
+                const leftRatio = parseFloat(selectedIcon.style.left) / gridCanvas.width;
+                const topRatio = parseFloat(selectedIcon.style.top) / gridCanvas.height;
+
+                selectedIcon.style.left = leftRatio * gridContainer.clientWidth + 'px';
+                selectedIcon.style.top = topRatio * gridContainer.clientHeight + 'px';
             }
         }
 
@@ -357,7 +374,8 @@
 
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
-
+        window.addEventListener('wheel', handleWheel);
+        gridContainer.addEventListener('wheel', handleWheel);  
         let prevScrollPos = window.pageYOffset;
 
         window.onscroll = function () {
