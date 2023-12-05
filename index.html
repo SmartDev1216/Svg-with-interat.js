@@ -285,21 +285,20 @@
         let selectedIcon = null;
         let isDragging = false;
         let deleteButton = null;
-        let selectedIconList = []
-
+        let idNumber = 0;
+        let selectedIdList = []
 
         function removeImgs() {
-            // Iterate over the selectedIconList and remove each icon
-            selectedIconList.forEach(function (iconSrc) {
-                const iconToDelete = document.querySelector(`.enlarged-icon img[src="${iconSrc}"]`).closest('.enlarged-icon');
+            selectedIdList.forEach(function (id) {
+                const iconToDelete = document.getElementById(id);
                 if (iconToDelete) {
-                    gridContainer.removeChild(iconToDelete);
+                    const closestEnlargedIcon = iconToDelete.closest('.enlarged-icon');
+                    if (closestEnlargedIcon) {
+                        gridContainer.removeChild(closestEnlargedIcon);
+                    }
                 }
             });
-
-            // Clear the selectedIconList
-            selectedIconList = [];
-
+            selectedIdList = [];
             // Reset other variables as needed
             selectedIcon = null;
             isDragging = false;
@@ -308,7 +307,7 @@
             startTop = null;
             startX = null;
             startY = null;
-
+            idNumber = 0;
             // Redraw the grid
             drawGrid();
         }
@@ -331,32 +330,17 @@
             }
         }
 
-        function deleteButtonClickHandler(event) {
-            const deleteButton = event.target;
-            const parentIcon = deleteButton.closest('.enlarged-icon');
+        // Function to generate a unique ID
+        function generateUniqueId() {
+            return 'icon_' + idNumber;
 
-            if (parentIcon) {
-                // Remove the parent icon from the gridContainer
-                gridContainer.removeChild(parentIcon);
-
-                // Find the index of the parent icon's src in the selectedIconList
-                const iconSrc = parentIcon.querySelector('img').getAttribute('src');
-                const iconIndex = selectedIconList.indexOf(iconSrc);
-
-                // Remove the icon's src from the selectedIconList
-                if (iconIndex !== -1) {
-                    selectedIconList.splice(iconIndex, 1);
-                }
-            }
-
-            event.stopPropagation();
         }
+
         function iconClick(element) {
 
             let selectedIcon = null;
-
-            if (!selectedIconList.includes(element.querySelector('img').getAttribute('src'))) {
-                selectedIconList.push(element.querySelector('img').getAttribute('src'))
+    
+            if (!selectedIdList.includes(element.getAttribute('id'))) {
                 selectedIcon = element.cloneNode(true);
                 selectedIcon.classList.add('enlarged-icon');
                 selectedIcon.style.position = 'absolute';
@@ -376,7 +360,11 @@
 
                 selectedIcon.style.left = centerX + 'px';
                 selectedIcon.style.top = centerY + 'px';
-
+                const iconId = generateUniqueId(); // You need to implement this function
+                selectedIcon.id = iconId;
+                selectedIdList.push(iconId)
+                idNumber++;
+                selectedIdList.push(selectedIcon.id)
                 // Add delete button
                 let existingDeleteButton = selectedIcon.querySelector('.delete-button');
 
@@ -400,7 +388,7 @@
 
                 // Append the selectedIcon to the gridContainer
                 gridContainer.appendChild(selectedIcon);
-
+              
                 // Attach wheel event listener to the selected icon
                 selectedIcon.addEventListener('wheel', function (event) {
                     handleWheel(selectedIcon, event);
@@ -471,19 +459,21 @@
         }
 
         function handleWheel(selectedIcon, event) {
-            event.preventDefault();
+            if (event) {
+                event.preventDefault();
 
-            const deltaY = event.deltaY;
-            const imgElement = selectedIcon.querySelector('img');
-            const currentSize = parseFloat(imgElement.style.width);
+                const deltaY = event.deltaY;
+                const imgElement = selectedIcon.querySelector('img');
+                const currentSize = parseFloat(imgElement.style.width);
 
-            // Calculate the new size based on the zoom factor and scroll direction
-            const newSize = currentSize * (1 + zoomFactor * (deltaY > 0 ? -1 : 1));
+                // Calculate the new size based on the zoom factor and scroll direction
+                const newSize = currentSize * (1 + zoomFactor * (deltaY > 0 ? -1 : 1));
 
-            // Adjust the limits for zooming
-            if (newSize >= 24 && newSize <= 200) {
-                imgElement.style.width = newSize + 'px';
-                imgElement.style.height = newSize + 'px';
+                // Adjust the limits for zooming
+                if (newSize >= 24 && newSize <= 200) {
+                    imgElement.style.width = newSize + 'px';
+                    imgElement.style.height = newSize + 'px';
+                }
             }
         }
 
@@ -492,9 +482,8 @@
                 // Remove the iconToDelete from the gridContainer
                 gridContainer.removeChild(iconToDelete);
 
-                // Remove the icon's src from the selectedIconList
-                const iconSrc = iconToDelete.querySelector('img').getAttribute('src');
-                selectedIconList = selectedIconList.filter(function (element) {
+                const iconSrc = iconToDelete.querySelector('img').getAttribute('id');
+                selectedIdList = selectedIdList.filter(function (element) {
                     return element !== iconSrc;
                 });
 
@@ -523,7 +512,7 @@
         const ctx = gridCanvas.getContext('2d');
 
         function resizeCanvas() {
-    
+
             gridCanvas.width = gridContainer.clientWidth;
             gridCanvas.height = gridContainer.clientHeight;
             drawGrid();
